@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spectro library</title>  
+    {% load static %}
+    <link rel="stylesheet" href="{% static "css/style.css" %}"/>
+    <script type="text/javascript" src="{% static "fusioncharts/fusioncharts.js" %}"></script>
+    <script type="text/javascript" src="{% static "fusioncharts/fusioncharts.charts.js" %}"></script>
+    <script type="text/javascript" src="{% static "fusioncharts/themes/fusioncharts.theme.fusion.js" %}"></script>
+</head>
+<body>
+	<div id="graphs">
+    {% for graph in output %}
+    	<div class="chartContainer">
+	    	<div id="chartContainer{{graph.ID}}" class="chart">
+	    	{{graph.graph|safe}}
+	    	</div>
+    	</div>
+    {% endfor %}
+    </div>
+</body>
+</html>
