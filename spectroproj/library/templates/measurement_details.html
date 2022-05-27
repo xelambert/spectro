@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Бібліотека спектрів</title>  
+{% load static %}
+    <link rel="stylesheet" href="{% static "css/style.css" %}"/>
+     <script type="text/javascript" src="{% static "fusioncharts/fusioncharts.js" %}"></script>
+    <script type="text/javascript" src="{% static "fusioncharts/fusioncharts.charts.js" %}"></script>
+    <script type="text/javascript" src="{% static "fusioncharts/themes/fusioncharts.theme.fusion.js" %}"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div>
+            <h1>Детальна інформація про спектр</h1>
+            <form enctype="multipart/form-data" action="" method='POST'>
+                {% csrf_token %}
+               <!-- <div class="chart-container">-->
+                    
+                    <!--<div id="spectro">
+                        {{output.graph|safe}}
+                    </div>-->
+
+                    <div class="chartContainer">
+                        <div id="chartContainer{{output.ID}}" class="chart">
+                        {{output.graph|safe}}
+                        </div>
+                    </div>
+                
+               <!-- </div>-->
+                <input type="hidden" name="id" value="{{output.ID}}"/>
+                Дата: <input type="text" name="date" value="{{params.date}}" readonly/><br/>
+                Назва виміру: <input type="text" name="name" value="{{params.name}}" {% if not hasEditRights %}readonly{% endif %}/><br/>
+                Назва спектрометру: <input type="text" name="nameSpectrometer" value="{{params.nameSpectrometer}}" {% if not hasEditRights %}readonly{% endif %}/><br/>
+                Тип спектрометру: <input type="text" value="{{params.typeSpectrometer}}" name="typeSpectrometer" {% if not hasEditRights %}readonly{% endif %}/><br/>
+                Діапазон: <input type="text" value="{{params.range}}" name="range" {% if not hasEditRights %}readonly{% endif %}/><br/>
+                Фільтр розділення порядків: <input type="text" value="{{params.filter}}" name="filter" {% if not hasEditRights %}readonly{% endif %}/><br/>
+                {% if hasEditRights %}<button type="submit" name="action" value="save">Зберегти зміни</button>{% endif %}
+                {% if hasEditRights %}<button type="submit" name="action" value="delete">Видалити дане вимірювання</button>{% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Spectro library</title>  
+    <title>Бібліотека спектрів</title>  
     {% load static %}
     <link rel="stylesheet" href="{% static "css/style.css" %}"/>
     <script type="text/javascript" src="{% static "fusioncharts/fusioncharts.js" %}"></script>
@@ -9,13 +9,18 @@
     <script type="text/javascript" src="{% static "fusioncharts/themes/fusioncharts.theme.fusion.js" %}"></script>
 </head>
 <body>
+	<div id="header">
+		<a href="/add-measurement"><input type="button" value="add"/></a>
+	</div>
 	<div id="graphs">
     {% for graph in output %}
-    	<div class="chartContainer">
-	    	<div id="chartContainer{{graph.ID}}" class="chart">
-	    	{{graph.graph|safe}}
+    	<a href="/measurement_details/?id={{graph.ID}}">
+	    	<div class="chartContainer">
+		    	<div id="chartContainer{{graph.ID}}" class="chart">
+		    	{{graph.graph|safe}}
+		    	</div>
 	    	</div>
-    	</div>
+    	</a>
     {% endfor %}
     </div>
 </body>
