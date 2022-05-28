@@ -20,10 +20,10 @@ def measurements_list(request):
   dataSource = OrderedDict()
 
   chartConfig = OrderedDict()
-  chartConfig["caption"] = "Spectro"
-  chartConfig["subCaption"] = "In CU — conventional units"
-  chartConfig["xAxisName"] = "Wave length"
-  chartConfig["yAxisName"] = "Intensity (In CU)"
+  chartConfig["caption"] = ""
+  chartConfig["subCaption"] = "В УО — умовних одиницях"
+  chartConfig["xAxisName"] = "Довжина хвилі (нм)"
+  chartConfig["yAxisName"] = "Інтенсивність (В УО)"
   chartConfig["numberSuffix"] = ""
   chartConfig["theme"] = "fusion"
   chartConfig["drawAnchors"] = False
@@ -66,7 +66,7 @@ def measurements_list(request):
       ]
 
       dataSource["dataset"].append({"data": data, 
-          "seriesname": "Spectro",
+          "seriesname": "Спектр",
               "showregressionline": "0",
               "drawLine": "1"})
 
@@ -99,9 +99,39 @@ def addMeasurement(request):
         cursor = connections['default'].cursor()
         try:
             if (isContentValid(content) == True):
-              measurementSequenceString = regex.sub(r',$', ' ', regex.sub(r'(\d+)([.](\d+)){0,1}\s(\d+)([.](\d+)){0,1}', r'(\1\2,\4\5),', content).replace('\r\n', ''))
-              logger.error(measurementSequenceString)
+              #measurementSequenceString = regex.sub(r',$', ' ', regex.sub(r'(\d+)([.](\d+)){0,1}\s(\d+)([.](\d+)){0,1}', r'(\1\2,\4\5),', content).replace('\r\n', ''))
+              measurementSequenceString = regex.sub(r',$', ' ', regex.sub(r'(\d+)([.](\d+)){0,1}\s(\d+)([.](\d+)){0,1}', r'(\1\2,\4\5),', content))
+              measurementSequenceString = measurementSequenceString.replace('\r\n', '<n>')
+              measurementSequenceString = measurementSequenceString[:len(measurementSequenceString)-4]
 
+              #logger.error("FUCK")
+
+              counter = 0
+              index = 0
+              start = 0
+
+              while (measurementSequenceString.find('<n>', start) != -1):
+                #if counter % 990 == 0:
+                #logger.error("here")
+                index = measurementSequenceString.find(',<n>', start)
+                start = index + 4
+                #logger.error("here")
+
+                if (counter % 6 == 0) and counter != 0:
+                  measurementSequenceString = measurementSequenceString[:(index)] + ' INSERT INTO dbo.library_measurementsequence <lb>measurementID, waveLength, intensity) VALUES ' + measurementSequenceString[(index+4):]
+                  #start += 4
+                  #index += 4
+                  
+                  logger.error("finded index:" + str(index) + "; new start: " + str(start) + "; counter: " + str(counter))
+                  
+                logger.error( "new start: " + str(start) + "; counter: " + str(counter))
+                counter += 1
+                
+
+              measurementSequenceString = measurementSequenceString.replace('<n>', '')
+
+              #logger.error('SEQSTRING===== ' + measurementSequenceString)
+              logger.error('EXEC [dbo].[MeasurementSequence@Add] @debug = 0, @measurementSequence = \'' + measurementSequenceString + '\'')
               cursor.execute('EXEC [dbo].[MeasurementSequence@Add] @debug = 0, @measurementSequence = \'' + measurementSequenceString + '\'')
 
               records = cursor.fetchall()
@@ -114,7 +144,7 @@ def addMeasurement(request):
         finally:
             cursor.close()
 
-        return redirect('../measurements_list') #redirect('measurements_list')
+        return redirect('../') #redirect('measurements_list')
     context = {'form':form}
     return render(request, 'add-measurement.html', context)
 
@@ -176,6 +206,7 @@ def measurementDetails(request):
       params['id'] = request.POST['id']
 
       Measurement.objects.filter(ID = params['id']).delete()
+      MeasurementSequence.objects.filter(measurementID = params['id']).delete()
 
     return redirect('measurements_list')
 
@@ -184,10 +215,10 @@ def measurementDetails(request):
   dataSource = OrderedDict()
 
   chartConfig = OrderedDict()
-  chartConfig["caption"] = "Spectro"
-  chartConfig["subCaption"] = "In CU — conventional units"
-  chartConfig["xAxisName"] = "Wave length"
-  chartConfig["yAxisName"] = "Intensity (In CU)"
+  chartConfig["caption"] = ""
+  chartConfig["subCaption"] = "В УО — умовних одиницях"
+  chartConfig["xAxisName"] = "Довжина хвилі (нм)"
+  chartConfig["yAxisName"] = "Інтенсивність (в УО)"
   chartConfig["numberSuffix"] = ""
   chartConfig["theme"] = "fusion"
   chartConfig["drawAnchors"] = False
@@ -240,7 +271,7 @@ def measurementDetails(request):
     ]
 
     dataSource["dataset"].append({"data": data, 
-        "seriesname": "Spectro",
+        "seriesname": "Спектр",
             "showregressionline": "0",
             "drawLine": "1"})
 

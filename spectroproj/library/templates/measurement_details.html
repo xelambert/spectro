@@ -3,12 +3,16 @@
 <head>
     <title>Бібліотека спектрів</title>  
 {% load static %}
-    <link rel="stylesheet" href="{% static "css/style.css" %}"/>
+    <link rel="stylesheet" href="{% static "css/details.css" %}"/>
      <script type="text/javascript" src="{% static "fusioncharts/fusioncharts.js" %}"></script>
     <script type="text/javascript" src="{% static "fusioncharts/fusioncharts.charts.js" %}"></script>
     <script type="text/javascript" src="{% static "fusioncharts/themes/fusioncharts.theme.fusion.js" %}"></script>
 </head>
 <body>
+<div id="header">
+    <a href="../"><input type="button" value="На головну"/></a>
+    <a href="../logout"><input type="button" value="Вийти з акаунту"/></a>
+</div>
 <div class="container">
     <div class="row">
         <div>
@@ -32,14 +36,16 @@
                     <p>Пік {{peak.waveLength}} нм: {{peak.info}}</p>
                 {% endfor %}
                 <input type="hidden" name="id" value="{{output.ID}}"/>
-                Дата: <input type="text" name="date" value="{{params.date}}" readonly/><br/>
-                Назва виміру: <input type="text" name="name" value="{{params.name}}" {% if not hasEditRights %}readonly{% endif %}/><br/>
-                Назва спектрометру: <input type="text" name="nameSpectrometer" value="{{params.nameSpectrometer}}" {% if not hasEditRights %}readonly{% endif %}/><br/>
-                Тип спектрометру: <input type="text" value="{{params.typeSpectrometer}}" name="typeSpectrometer" {% if not hasEditRights %}readonly{% endif %}/><br/>
-                Діапазон: <input type="text" value="{{params.range}}" name="range" {% if not hasEditRights %}readonly{% endif %}/><br/>
-                Фільтр розділення порядків: <input type="text" value="{{params.filter}}" name="filter" {% if not hasEditRights %}readonly{% endif %}/><br/>
-                {% if hasEditRights %}<button type="submit" name="action" value="save">Зберегти зміни</button>{% endif %}
-                {% if hasEditRights %}<button type="submit" name="action" value="delete">Видалити дане вимірювання</button>{% endif %}
+                <table>
+                    <tr><td>Дата:</td><td> <input type="text" name="date" value="{{params.date}}" readonly/></td></tr>
+                <tr><td>Назва виміру:</td><td> <input type="text" name="name" value="{{params.name}}" {% if not hasEditRights %}readonly{% endif %}/></td></tr>
+                <tr><td>Назва спектрометру:</td><td> <input type="text" name="nameSpectrometer" value="{{params.nameSpectrometer}}" {% if not hasEditRights %}readonly{% endif %}/></td></tr>
+                <tr><td>Тип спектрометру:</td><td> <input type="text" value="{{params.typeSpectrometer}}" name="typeSpectrometer" {% if not hasEditRights %}readonly{% endif %}/></td></tr>
+                <tr><td>Діапазон:</td><td> <input type="text" value="{{params.range}}" name="range" {% if not hasEditRights %}readonly{% endif %}/></td></tr>
+                <tr><td>Фільтр розділення порядків:</td><td> <input type="text" value="{{params.filter}}" name="filter" {% if not hasEditRights %}readonly{% endif %}/></td></tr>
+                <tr><td>{% if hasEditRights %}<button type="submit" name="action" value="save">Зберегти зміни</button>{% endif %}</td><td>{% if hasEditRights %}<button type="submit" name="action" value="delete">Видалити дане вимірювання</button>{% endif %}</td></tr>
+                
+                </table>
             </form>
         </div>
     </div>
