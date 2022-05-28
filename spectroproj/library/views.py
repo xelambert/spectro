@@ -31,12 +31,9 @@ def measurements_list(request):
 
   output = []
 
-  #getting all measurements
   measurements = Measurement.objects.all().order_by('-date')
 
   for measurement in measurements:
-
-    #getting full measurement sequence
     measurementSequence = MeasurementSequence.objects.filter(measurementID = measurement.ID).order_by('waveLength')
 
     if (len(measurementSequence) > 0):
@@ -87,51 +84,31 @@ def addMeasurement(request):
     if request.method == 'POST':
         form = MeasurementForm(request.POST)
         file = request.FILES['file']
-        #logger.error(str(type(file)))
 
         content = str(file.read().decode())
 
-        #logger.error(content)
-
-        #дёргаем процедуру для сохранения последовательности спектра
         errorString = ''
 
         cursor = connections['default'].cursor()
         try:
             if (isContentValid(content) == True):
-              #measurementSequenceString = regex.sub(r',$', ' ', regex.sub(r'(\d+)([.](\d+)){0,1}\s(\d+)([.](\d+)){0,1}', r'(\1\2,\4\5),', content).replace('\r\n', ''))
               measurementSequenceString = regex.sub(r',$', ' ', regex.sub(r'(\d+)([.](\d+)){0,1}\s(\d+)([.](\d+)){0,1}', r'(\1\2,\4\5),', content))
               measurementSequenceString = measurementSequenceString.replace('\r\n', '<n>')
               measurementSequenceString = measurementSequenceString[:len(measurementSequenceString)-4]
-
-              #logger.error("FUCK")
 
               counter = 0
               index = 0
               start = 0
 
               while (measurementSequenceString.find('<n>', start) != -1):
-                #if counter % 990 == 0:
-                #logger.error("here")
                 index = measurementSequenceString.find(',<n>', start)
                 start = index + 4
-                #logger.error("here")
 
-                if (counter % 6 == 0) and counter != 0:
+                if (counter % 990 == 0) and counter != 0:
                   measurementSequenceString = measurementSequenceString[:(index)] + ' INSERT INTO dbo.library_measurementsequence <lb>measurementID, waveLength, intensity) VALUES ' + measurementSequenceString[(index+4):]
-                  #start += 4
-                  #index += 4
-                  
-                  logger.error("finded index:" + str(index) + "; new start: " + str(start) + "; counter: " + str(counter))
-                  
-                logger.error( "new start: " + str(start) + "; counter: " + str(counter))
-                counter += 1
-                
+                counter += 1  
 
               measurementSequenceString = measurementSequenceString.replace('<n>', '')
-
-              #logger.error('SEQSTRING===== ' + measurementSequenceString)
-              logger.error('EXEC [dbo].[MeasurementSequence@Add] @debug = 0, @measurementSequence = \'' + measurementSequenceString + '\'')
               cursor.execute('EXEC [dbo].[MeasurementSequence@Add] @debug = 0, @measurementSequence = \'' + measurementSequenceString + '\'')
 
               records = cursor.fetchall()
@@ -144,7 +121,7 @@ def addMeasurement(request):
         finally:
             cursor.close()
 
-        return redirect('../') #redirect('measurements_list')
+        return redirect('../')
     context = {'form':form}
     return render(request, 'add-measurement.html', context)
 
@@ -161,10 +138,7 @@ def measurementDetails(request):
  
 
   if request.method == 'POST':
-    #logger.error(request.POST['action'])
     if (request.POST['action'] == 'save'):
-
-      #logger.error(request.POST)
 
       params['id'] = request.POST['id']
       params['name'] = request.POST['name']
@@ -179,22 +153,13 @@ def measurementDetails(request):
       paramsString += ' ,range = \'\'' + params['range'] + '\'\''
       paramsString += ' ,filter = \'\'' + params['filter'] + '\'\''
       paramsString += ' WHERE id = ' + params['id']
-      #logger.error(id)
 
-      #logger.error(params.id)
       cursor = connections['default'].cursor()
       try:
-          #if (isContentValid(content) == True):
-          #logger.error('EXEC [dbo].[Measurement@Edit] @debug = 0, @params = ' + paramsString)
-
           cursor.execute('EXEC [dbo].[Measurement@Edit] @debug = 0, @params = \'' + paramsString + '\'')
-
-
 
           records = cursor.fetchall()
           errorString = records[0][0]
-          #else:
-            #errorString = "Невірний формат завантаженого файлу."
 
           if (errorString != ''):
             return render(request, 'error.html', { 'errorString': errorString })
@@ -236,9 +201,6 @@ def measurementDetails(request):
   params['range'] = str(measurement.range or '')
   params['filter'] = str(measurement.filter or '')
 
-  #logger.error(params)
-
-  #getting full measurement sequence
   measurementSequence = MeasurementSequence.objects.filter(measurementID = measurementID).order_by('waveLength')
 
   if (len(measurementSequence) > 0):
@@ -276,7 +238,7 @@ def measurementDetails(request):
             "drawLine": "1"})
 
 
-  n = 15  # the larger n is, the smoother curve will be
+  n = 15
   b = [1.0 / n] * n
   a = 1
   yy = lfilter(b,a,vector)
@@ -285,24 +247,13 @@ def measurementDetails(request):
   counter = 0
 
   for val in vector:
-    #smoothPart = counter/len(vector)
-    #originalPart =  1 - smoothPart
-    #yyy.append(vector[counter] * originalPart + yy[counter] * smoothPart)
     if (counter < 0.75 * len(vector)):
       yyy.append(vector[counter])
     else:
       yyy.append(yy[counter])
     counter += 1
 
-  #plt.plot(x, yy, linewidth=2, linestyle="-", c="b")  # smooth by filter
-  #print('Detect peaks without any filters.')
-  #indexes = scipy.signal.find_peaks_cwt(vector, np.arange(1, 4),
-     # max_distances=np.arange(1, 4)*2)
-  #indexes, _ = scipy.signal.find_peaks(vector, height=200, width=3, prominence=200)
-  #indexes, _ = scipy.signal.find_peaks(vector, height=200, width=3, prominence=120)
-  #indexes, _ = scipy.signal.find_peaks(vector, height=200, prominence=110, width=3, wlen=20, threshold=10)
   indexes, _ = scipy.signal.find_peaks(yyy, width=3, prominence=120)
-  logger.error('Peaks are: %s' % (indexes))
 
   peaksInfo = []
   info = [{"waveLength": "468.01", "text": "Спектральна лінія атому Цинку"},
@@ -323,7 +274,6 @@ def measurementDetails(request):
 
   for index in indexes:
     counter += 1
-    #peaksWaveLenghts.append(float(measurementSequence[index].waveLength))
     dataSource["categories"][int(0)]["category"].append({"x": str(measurementSequence[int(index)].waveLength), "label": str(measurementSequence[int(index)].waveLength), "showverticalline": "1", })
     peakInfoText = ""
 
@@ -331,20 +281,11 @@ def measurementDetails(request):
       if (abs(float(measurementSequence[int(index)].waveLength) - float(infoEntry["waveLength"])) <= 1.2):
         peakInfoText = infoEntry["text"]
     peaksInfo.append({"waveLength": str(measurementSequence[int(index)].waveLength), "info": peakInfoText,})
-    #logger.error(dataSource["categories"])
-
-  logger.error(dataSource["categories"][int(0)]["category"])
 
   scatter = FusionCharts("scatter", "chart" + str(measurementID), "1500", "400", "chartContainer" + str(measurementID), "json", dataSource)
 
   output.append({"graph": scatter.render(), "ID": measurementID, "peaksInfo": peaksInfo})
 
-  #logger.error(str(measurementID))
-  #logger.error((output[0]))
-
-
-
-  
   return render(request, 'measurement_details.html', {'hasEditRights': hasEditRights, 'output': output[0], "params": params} )
 
 def isContentValid(content):

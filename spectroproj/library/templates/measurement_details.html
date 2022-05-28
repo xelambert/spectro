@@ -19,19 +19,11 @@
             <h1>Детальна інформація про спектр</h1>
             <form enctype="multipart/form-data" action="" method='POST'>
                 {% csrf_token %}
-               <!-- <div class="chart-container">-->
-                    
-                    <!--<div id="spectro">
-                        {{output.graph|safe}}
-                    </div>-->
-
                     <div class="chartContainer">
                         <div id="chartContainer{{output.ID}}" class="chart">
                         {{output.graph|safe}}
                         </div>
                     </div>
-                
-               <!-- </div>-->
                {% for peak in output.peaksInfo %}
                     <p>Пік {{peak.waveLength}} нм: {{peak.info}}</p>
                 {% endfor %}
