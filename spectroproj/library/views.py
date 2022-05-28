@@ -7,6 +7,9 @@ from .fusioncharts import FusionCharts
 from .forms import MeasurementForm
 from django.db import connections
 import logging, re, regex
+import numpy as np
+import scipy.signal
+from scipy.signal import lfilter
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +81,11 @@ def addMeasurement(request):
     if request.method == 'POST':
         form = MeasurementForm(request.POST)
         file = request.FILES['file']
-        logger.error(str(type(file)))
+        #logger.error(str(type(file)))
 
         content = str(file.read().decode())
 
-        logger.error(content)
+        #logger.error(content)
 
         #дёргаем процедуру для сохранения последовательности спектра
         errorString = ''
@@ -115,10 +118,10 @@ def measurementDetails(request):
  
 
   if request.method == 'POST':
-    logger.error(request.POST['action'])
+    #logger.error(request.POST['action'])
     if (request.POST['action'] == 'save'):
 
-      logger.error(request.POST)
+      #logger.error(request.POST)
 
       params['id'] = request.POST['id']
       params['name'] = request.POST['name']
@@ -139,7 +142,7 @@ def measurementDetails(request):
       cursor = connections['default'].cursor()
       try:
           #if (isContentValid(content) == True):
-          logger.error('EXEC [dbo].[Measurement@Edit] @debug = 0, @params = ' + paramsString)
+          #logger.error('EXEC [dbo].[Measurement@Edit] @debug = 0, @params = ' + paramsString)
 
           cursor.execute('EXEC [dbo].[Measurement@Edit] @debug = 0, @params = \'' + paramsString + '\'')
 
@@ -189,12 +192,14 @@ def measurementDetails(request):
   params['range'] = str(measurement.range or '')
   params['filter'] = str(measurement.filter or '')
 
-  logger.error(params)
+  #logger.error(params)
 
   #getting full measurement sequence
   measurementSequence = MeasurementSequence.objects.filter(measurementID = measurementID).order_by('waveLength')
 
   if (len(measurementSequence) > 0):
+    vector = []
+    peaksWaveLenghts = []
 
     dataSource["chart"] = chartConfig
     dataSource["dataset"] = []
@@ -202,6 +207,7 @@ def measurementDetails(request):
 
     for lengthIntensityPair in measurementSequence:
         data.append({"x": str(lengthIntensityPair.waveLength), "y": str(lengthIntensityPair.intensity)})
+        vector.append(float(lengthIntensityPair.intensity))
 
     dataSource["categories"] = [
         {
@@ -215,7 +221,7 @@ def measurementDetails(request):
                     "x": str(measurementSequence[len(measurementSequence) - 1].waveLength),
                     "label": str(measurementSequence[len(measurementSequence) - 1].waveLength),
                     "showverticalline": "0"
-                }
+                },            
             ]
         }
     ]
@@ -225,13 +231,76 @@ def measurementDetails(request):
             "showregressionline": "0",
             "drawLine": "1"})
 
-  scatter = FusionCharts("scatter", "chart" + str(measurementID), "400", "400", "chartContainer" + str(measurementID), "json", dataSource)
 
-  output.append({"graph": scatter.render(), "ID": measurementID})
+  n = 15  # the larger n is, the smoother curve will be
+  b = [1.0 / n] * n
+  a = 1
+  yy = lfilter(b,a,vector)
+
+  yyy = []
+  counter = 0
+
+  for val in vector:
+    #smoothPart = counter/len(vector)
+    #originalPart =  1 - smoothPart
+    #yyy.append(vector[counter] * originalPart + yy[counter] * smoothPart)
+    if (counter < 0.75 * len(vector)):
+      yyy.append(vector[counter])
+    else:
+      yyy.append(yy[counter])
+    counter += 1
+
+  #plt.plot(x, yy, linewidth=2, linestyle="-", c="b")  # smooth by filter
+  #print('Detect peaks without any filters.')
+  #indexes = scipy.signal.find_peaks_cwt(vector, np.arange(1, 4),
+     # max_distances=np.arange(1, 4)*2)
+  #indexes, _ = scipy.signal.find_peaks(vector, height=200, width=3, prominence=200)
+  #indexes, _ = scipy.signal.find_peaks(vector, height=200, width=3, prominence=120)
+  #indexes, _ = scipy.signal.find_peaks(vector, height=200, prominence=110, width=3, wlen=20, threshold=10)
+  indexes, _ = scipy.signal.find_peaks(yyy, width=3, prominence=120)
+  logger.error('Peaks are: %s' % (indexes))
+
+  peaksInfo = []
+  info = [{"waveLength": "468.01", "text": "Спектральна лінія атому Цинку"},
+  {"waveLength": "472.2", "text": "Спектральна лінія атому Цинку"},
+  {"waveLength": "481.05", "text": "Спектральна лінія атому Цинку"},
+  {"waveLength": "492.4", "text": "Спектральна лінія іона Цинку"},
+  {"waveLength": "589.44", "text": "Спектральна лінія іона Цинку"},
+  {"waveLength": "602.12", "text": "Спектральна лінія іона Цинку"},
+  {"waveLength": "610.25", "text": "Спектральна лінія іона Цинку"},
+  {"waveLength": "636.23", "text": "Спектральна лінія атому Цинку"},
+  {"waveLength": "656.3", "text": "Спектральна лінія водню серії Бальмера Hα"},
+  {"waveLength": "747.88", "text": "Спектральна лінія іона Цинку"},
+  {"waveLength": "758.85", "text": "Спектральна лінія іона Цинку"},
+  {"waveLength": "773.25", "text": "Спектральна лінія іона Цинку"},
+  {"waveLength": "777.42", "text": "Спектральна лінія Кисню"},]
+
+  counter = 0
+
+  for index in indexes:
+    counter += 1
+    #peaksWaveLenghts.append(float(measurementSequence[index].waveLength))
+    dataSource["categories"][int(0)]["category"].append({"x": str(measurementSequence[int(index)].waveLength), "label": str(measurementSequence[int(index)].waveLength), "showverticalline": "1", })
+    peakInfoText = ""
+
+    for infoEntry in info:
+      if (abs(float(measurementSequence[int(index)].waveLength) - float(infoEntry["waveLength"])) <= 1.2):
+        peakInfoText = infoEntry["text"]
+    peaksInfo.append({"waveLength": str(measurementSequence[int(index)].waveLength), "info": peakInfoText,})
+    #logger.error(dataSource["categories"])
+
+  logger.error(dataSource["categories"][int(0)]["category"])
+
+  scatter = FusionCharts("scatter", "chart" + str(measurementID), "1500", "400", "chartContainer" + str(measurementID), "json", dataSource)
+
+  output.append({"graph": scatter.render(), "ID": measurementID, "peaksInfo": peaksInfo})
 
   #logger.error(str(measurementID))
   #logger.error((output[0]))
 
+
+
+  
   return render(request, 'measurement_details.html', {'hasEditRights': hasEditRights, 'output': output[0], "params": params} )
 
 def isContentValid(content):

@@ -28,6 +28,9 @@
                     </div>
                 
                <!-- </div>-->
+               {% for peak in output.peaksInfo %}
+                    <p>Пік {{peak.waveLength}} нм: {{peak.info}}</p>
+                {% endfor %}
                 <input type="hidden" name="id" value="{{output.ID}}"/>
                 Дата: <input type="text" name="date" value="{{params.date}}" readonly/><br/>
                 Назва виміру: <input type="text" name="name" value="{{params.name}}" {% if not hasEditRights %}readonly{% endif %}/><br/>
