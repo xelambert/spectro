@@ -17,6 +17,11 @@ def measurements_list(request):
   if (not request.user.is_authenticated):
     return redirect('../login')
 
+  importVisible = False
+
+  if (request.user.is_superuser):
+    importVisible = True
+
   dataSource = OrderedDict()
 
   chartConfig = OrderedDict()
@@ -72,7 +77,7 @@ def measurements_list(request):
     output.append({"graph": scatter.render(), "ID": measurement.ID})
 
   return render(request, 'measurements_list.html', {
-    'output': output
+    'output': output, 'importVisible': importVisible,
 })
 
 def addMeasurement(request):
@@ -131,7 +136,7 @@ def measurementDetails(request):
 
   hasEditRights = False
 
-  if (request.user.username == 'su'):
+  if (request.user.is_superuser):
     hasEditRights = True
 
   params = {'id': '',}

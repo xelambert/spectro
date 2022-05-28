@@ -10,7 +10,9 @@
 </head>
 <body>
 	<div id="header">
+		{% if importVisible %}
 		<a href="/add-measurement"><input type="button" value="Імпорт"/></a>
+		{% endif %}
 		<a href="/logout"><input type="button" value="Вийти з акаунту"/></a>
 	</div>
 	<div id="graphs">
