@@ -14,6 +14,9 @@ from scipy.signal import lfilter
 logger = logging.getLogger(__name__)
 
 def measurements_list(request):
+  if (not request.user.is_authenticated):
+    return redirect('../login')
+
   dataSource = OrderedDict()
 
   chartConfig = OrderedDict()
@@ -76,6 +79,9 @@ def measurements_list(request):
 })
 
 def addMeasurement(request):
+    if (not request.user.is_authenticated):
+      return redirect('../login')
+
     form = MeasurementForm
     
     if request.method == 'POST':
@@ -113,7 +119,14 @@ def addMeasurement(request):
     return render(request, 'add-measurement.html', context)
 
 def measurementDetails(request):
-  hasEditRights = True
+  if (not request.user.is_authenticated):
+    return redirect('../login')
+
+  hasEditRights = False
+
+  if (request.user.username == 'su'):
+    hasEditRights = True
+
   params = {'id': '',}
  
 
