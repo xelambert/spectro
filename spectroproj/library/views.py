@@ -187,7 +187,7 @@ def measurementDetails(request):
   chartConfig["numberSuffix"] = ""
   chartConfig["theme"] = "fusion"
   chartConfig["drawAnchors"] = False
-  chartConfig["exportEnabled"] = False
+  chartConfig["exportEnabled"] = True
 
   output = []
 
